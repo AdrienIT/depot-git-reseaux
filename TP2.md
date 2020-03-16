@@ -1,283 +1,471 @@
-# TP 2 : Adrien Zoghbi
+# TP 3 Adrien ZOGHBI
 
-## TP 2 - Machine virtuelle, réseau, serveurs, routage simple
+## TP 3 - Routage, ARP, Spéléologie réseau
 
-## I. Création et utilisation simples d'une VM CentOS
+### Préparation de l'environnement
 
-### 4. Configuration réseau d'une machine CentOS
-
- - Déterminer la liste de vos cartes réseau, les informations qui y sont liées, et la fonction de chacune.
-
-| Name | IP | MAC | Fonction |
-| -------- | -------- | -------- | -------- |
-| enp0s3 | 10.0.2.15     | 08:00:27:0e:9d:cf | -------- |
-| enp0s8 | 10.2.1.2     | 08:00:27:72:18:7d | -------- |
-
- - Changer la configuration de la carte réseau Host-Only
-
-Changeons l'ip de la carte réseau enp0s3
-
-Avant : 
-![](https://i.imgur.com/yPwISA9.png)
-
-Après : 
-![](https://i.imgur.com/bsMMRam.png)
-
-Ping de ma vm vers mon ordi : 
-![](https://i.imgur.com/mt6wdOL.png)
-
-### 5. Appréhension de quelques commandes
-
--  Faites un scan nmap du réseau host-only
+- 🌞 Prouvez que chacun des points de la préparation de l'environnement ci-dessus ont été respectés :  
 
 
 
 
-- Utiliser ss pour lister les ports TCP et UDP en écoute sur la machine
+#### Carte NAT désactivée : 
+ - Client : ![](https://i.imgur.com/dZZ02aq.png)
 
-Après avoir effectué la commande "ss -ltunp" on remarque que le protocol sshd tourne en écoute sur le port 22
+ - Serveur : ![](https://i.imgur.com/aYA9ZrO.png)
 
-![](https://i.imgur.com/TKMhezf.png)
+ - Routeur : ![](https://i.imgur.com/obY6VNU.png)
 
-## II. Notion de ports
 
-### 1. SSH
 
-Grace à la commande : 
+#### Serveur SSH fonctionnel qui écoute sur le port 7777/tcp
+
+ - ![Uploading file..._tqvbaa6xc]()
+
+
+#### Pare-feu activé et configuré
+
+ - ![](https://i.imgur.com/nweXH74.png)
+
+
+#### Nom configuré	
+ - Client
 ```
-ss -ltunp
-```
-On remarque que le port ssh écoute sur le 22.
-
-Pour se connecter en ssh depuis notre PC hote, il faut faire cette commande dans notre terminal : 
-```
-ssh root@10.2.1.1 -p 22
-```
-
-Preuve de la connexion : 
-![](https://i.imgur.com/p8CJfOD.png)
-
-### 2. Firewall
-
-#### A. SSH
- - Modifier le port du service SSH
+[root@client1 ~]# hostname
+client1.net1.tp3
 
 ```
-nano /etc/ssh/sshd_config
+ - Server
 ```
-Et on on modifie la ligne "Port 22" pour mettre 2220
-
-Il faut ensuite ajouter la règle dans le firewall
-
-Pour ce faire : 
+[root@server1 ~]# hostname
+server1.net2.tp3
 ```
-sudo firewall-cmd --add-port=2220/tcp --permanent
+ - Router
 ```
-
-```
-sudo firewall-cmd reload
-```
-On peut ensuite se reconnecter en ssh sur notre magnifique port 2220 depuis notre PC HOTE : 
-
-```
-PS C:\Users\Adrien>ssh root@10.2.1.2 -p 2220
-root@10.2.1.2's password:
-Last login: Thu Feb 20 14:02:04 2020 from 10.2.1.1
-[root@patron ~]#
+[root@router ~]# hostname
+router.tp3
 ```
 
-#### B. Netcat
+#### Fichiers /etc/hosts de toutes les machines configurés 	
 
-- Comme dans le précédent TP, on va faire un ptit chat. La VM sera le serveur, le PC sera le client.
-
-On fait de notre VM, notre serveur : 
-```
-nc -lp 4444
-```
-On ouvre le port 4444
-```
-sudo firewall-cmd --add-port=4444/tcp --permanent
-```
+- Client
 
 ```
-sudo firewall-cmd reload
-```
-Notre serveur est maintenant ouvert.
-Depuis notre PC HOTE, il faut se connecter à notre serveur : 
-```
-nc 10.2.1.2 4444
-```
-![](https://i.imgur.com/iDhF99B.png)
-Boom ça marche.
-Et pour voir la connexion sur notre serveur, il suffit de connaitre un peu les jobs linux et faire : 
-CTRL-Z 
-![](https://i.imgur.com/vOjlQur.png)
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
-On peut maintenant faire nos commandes (dont celle pour voir l'interaction entre notre VM et notre PC HOTE) : 
-
-![](https://i.imgur.com/gTW7krP.png)
-
-Et voila.
-
-- Inversez les rôles, le PC est le serveur netcat, la VM est le client.
-
-Pour faire l'inverse c'est simple, on effectue les commandes de la VM sur notre PC HOTE et les commandes de notre PC HOTE sur notre vm : 
-
-En effectuant notre ouverture de port, on a une notif windows : 
-![](https://i.imgur.com/iifwZQH.png)
-
-C'est la notif pour notre regle firewall, bref ...
-
-On effectue la commande pour se connecter : 
-```
-nc 10.2.1.1 4444
-```
-
-![](https://i.imgur.com/oYRTnwr.png)
-
-#### 3. Wireshark
-
-On lance wireshark, on enleve internet.
-
-On envoie un message dans le netcat.
-
-Et on observe wireshark
-
-![](https://i.imgur.com/M7iGQIn.png)
-
-On obtient nos 2 trames (Envoie et réponse)
-
-Le message est bien visible : 
-![](https://i.imgur.com/zaIv64E.png)
-
-Les messages échangés sont : 
-SYN
-SYNACK
-ACK
-![](https://i.imgur.com/kgYOJVC.png)
-
-## III. Routage statique
-
-### 1. Préparation des hôtes (vos PCs)
-
-#### Check
-
-- PC1 et PC2 se ping en utilisant le réseau 12
-
--> ![](https://i.imgur.com/wgI8Zza.png)
-
-
-- VM1 et PC1 se ping en utilisant le réseau 1
-
--> ![](https://i.imgur.com/9qcoA3O.png)
-
-- VM2 et PC2 se ping en utilisant le réseau 2
-
--> 
-
-- Activation routage 
-
--> ![](https://i.imgur.com/IXOxYRo.png)
-
-### 2. Configuration du routage
-
-#### A. PC1
-
- - PC1 accède déjà aux réseaux 1 et 12, il faut juste lui dire comment accéder au réseau 2
-
-(Sous windows)
+10.3.1.11 client1.net1.tp3
 
 ```
-route add 10.2.2.0/24 mask 255.255.255.0 10.2.12.2
-```
-```
-OK !
-```
-
-- :sun_with_face: PC1 devrait pouvoir ping 10.2.2.1 (l'adresse de PC2 dans 2)
-
--> En effet : ![](https://i.imgur.com/wgI8Zza.png)
-
-#### B. PC2
-
-(Sous Linux)
-```
-ip route add 10.2.2.0/24 via 10.2.12.2 dev eth0
-```
-```
-OK !
-```
-- :sun_with_face: PC2 devrait pouvoir ping 10.2.1.1 (l'adresse de PC1 dans 1).
-
--> En effet ![](https://i.imgur.com/usLZiWt.png)
-
-#### C. VM1
-
-- 🌞 Il faut dire à VM1 qu'elle peut joindre le réseau 2 en utilisant le lien qui l'unit avec PC1.
+- Serveur
 
 ```
-sudo ip route add 10.2.2.0/24 via 10.2.1.1 dev enp0s8
-```
+[root@server1 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
-(On est sur windows, faut désactiver le firewall)
-
- - VM1 devrait pouvoir ping 10.2.2.1, l'adresse de PC2 dans le réseau 2.
-
-Et oui, ça work : 
-
-![](https://i.imgur.com/1up9tGx.png)
-
-Traceroute : 
-
-![](https://i.imgur.com/0G6RReV.png)
-
-
-
-
-#### D. VM2
-
-- 🌞 VM2 devrait pouvoir ping 10.2.1.1, l'adresse de PC1 dans le réseau 1.
+10.3.2.11 server1.net2.tp3
 
 ```
-sudo ip route add 10.2.1.0/24 via 10.2.2.1 dev enp0s8
+
+- Router
+
+```
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.loca$
+::1         localhost localhost.localdomain localhost6 localhost6.loca$
+
+10.3.1.254 router.tp3
+
+10.3.2.254 router.tp3
+
 ```
 
-Et ça marche aussi :)
+#### Réseaux et adressage des machines
 
-![](https://i.imgur.com/AybqEsb.png)
+ -> client1 <> router
 
-Traceroute : 
+ - - depuis client1, ping router doit marcher
 
-![](https://i.imgur.com/nu0k4QU.png)
+```
+[root@client1 ~]# ping router
+PING router (10.3.1.254) 56(84) bytes of data.
+64 bytes from router (10.3.1.254): icmp_seq=1 ttl=64 time=0.390 ms
+64 bytes from router (10.3.1.254): icmp_seq=2 ttl=64 time=0.326 ms
+64 bytes from router (10.3.1.254): icmp_seq=3 ttl=64 time=0.338 ms
+64 bytes from router (10.3.1.254): icmp_seq=4 ttl=64 time=0.957 ms
+^C
+--- router ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3013ms
+rtt min/avg/max/mdev = 0.326/0.502/0.957/0.264 ms
+[root@client1 ~]#
+```
+
+ - - depuis router, ping client1 doit marcher
+
+```
+[root@router ~]# ping client1
+PING client1 (10.3.1.11) 56(84) bytes of data.
+64 bytes from client1 (10.3.1.11): icmp_seq=1 ttl=64 time=0.441 ms
+64 bytes from client1 (10.3.1.11): icmp_seq=2 ttl=64 time=0.940 ms
+64 bytes from client1 (10.3.1.11): icmp_seq=3 ttl=64 time=0.838 ms
+64 bytes from client1 (10.3.1.11): icmp_seq=4 ttl=64 time=0.514 ms
+^C
+--- client1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3010ms
+rtt min/avg/max/mdev = 0.441/0.683/0.940/0.211 ms
+[root@router ~]#
+```
+
+ -> server1 <> router
+
+ - - depuis server1, ping router doit marcher
+ 
+```
+[root@server1 ~]# ping router
+PING router (10.3.2.254) 56(84) bytes of data.
+64 bytes from router (10.3.2.254): icmp_seq=1 ttl=64 time=0.387 ms
+64 bytes from router (10.3.2.254): icmp_seq=2 ttl=64 time=0.379 ms
+64 bytes from router (10.3.2.254): icmp_seq=3 ttl=64 time=1.27 ms
+64 bytes from router (10.3.2.254): icmp_seq=4 ttl=64 time=0.553 ms
+^C
+--- router ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3018ms
+rtt min/avg/max/mdev = 0.379/0.648/1.275/0.369 ms
+[root@server1 ~]#
+```
+ 
+ - - depuis router, ping server1 doit marcher
+
+```
+[root@router ~]# ping server1
+PING server1 (10.3.2.11) 56(84) bytes of data.
+64 bytes from server1 (10.3.2.11): icmp_seq=1 ttl=64 time=0.500 ms
+64 bytes from server1 (10.3.2.11): icmp_seq=2 ttl=64 time=0.387 ms
+64 bytes from server1 (10.3.2.11): icmp_seq=3 ttl=64 time=0.966 ms
+64 bytes from server1 (10.3.2.11): icmp_seq=4 ttl=64 time=0.823 ms
+^C
+--- server1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3008ms
+rtt min/avg/max/mdev = 0.387/0.669/0.966/0.234 ms
+[root@router ~]#
+
+```
+
+### I. Mise en place du routage
+
+#### 1. Configuration du routage sur router
+
+🌞 Effectuez cette commande sur la machine router.
+
+```
+[root@router ~]# sudo sysctl -w net.ipv4.conf.all.forwarding=1
+net.ipv4.conf.all.forwarding = 1
+[root@router ~]#
+```
+
+#### 2. Ajouter les routes statiques
+
+```
+[root@client1 ~]# ip r s
+10.3.1.0/24 dev enp0s8 proto kernel scope link src 10.3.1.11 metric 101
+10.3.2.0/24 via 10.3.1.254 dev enp0s8 proto static metric 101
+[root@client1 ~]# ping 10.3.2.11
+PING 10.3.2.11 (10.3.2.11) 56(84) bytes of data.
+64 bytes from 10.3.2.11: icmp_seq=1 ttl=63 time=0.874 ms
+64 bytes from 10.3.2.11: icmp_seq=2 ttl=63 time=0.751 ms
+64 bytes from 10.3.2.11: icmp_seq=3 ttl=63 time=1.16 ms
+64 bytes from 10.3.2.11: icmp_seq=4 ttl=63 time=0.793 ms
+^C
+--- 10.3.2.11 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3004ms
+rtt min/avg/max/mdev = 0.751/0.894/1.160/0.162 ms
+[root@client1 ~]# traceroute 10.3.2.11
+traceroute to 10.3.2.11 (10.3.2.11), 30 hops max, 60 byte packets
+ 1  router (10.3.1.254)  0.320 ms  0.258 ms  0.223 ms
+ 2  router (10.3.1.254)  0.140 ms !X  0.232 ms !X  0.229 ms !X
+[root@client1 ~]#
+```
+
+```
+[root@server1 ~]# ip r s
+10.3.1.0/24 via 10.3.2.254 dev enp0s8 proto static metric 101
+10.3.2.0/24 dev enp0s8 proto kernel scope link src 10.3.2.11 metric 101
+[root@server1 ~]# ping 10.3.1.11
+PING 10.3.1.11 (10.3.1.11) 56(84) bytes of data.
+64 bytes from 10.3.1.11: icmp_seq=1 ttl=63 time=0.838 ms
+64 bytes from 10.3.1.11: icmp_seq=2 ttl=63 time=1.22 ms
+64 bytes from 10.3.1.11: icmp_seq=3 ttl=63 time=1.61 ms
+64 bytes from 10.3.1.11: icmp_seq=4 ttl=63 time=0.910 ms
+^C
+--- 10.3.1.11 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3014ms
+rtt min/avg/max/mdev = 0.838/1.146/1.612/0.305 ms
+[root@server1 ~]#
+```
+
+#### 3. Comprendre le routage
+
+🌞 Faites moi un 'tit tableau représentant cette trame choisie : 
 
 
 
-#### E. El gran final
+| zizi | MAC src | MAC dst | IP src | IP dst |
+| ---- | ------- | ------- | ------ | ------ |
+| Dans net1 (trame qui entre dans router) |08:00:27:38:66:f6|08:00:27:9a:f6:01|10.3.1.11|10.3.1.254|
+| Dans net2 (trame qui sort de router) | 08:00:27:89:0b:77 | 08:00:27:80:25:00|10.3.2.254|10.3.2.11|
 
-- 🌞 VM1 et VM2 se ping.
+### II. ARP
 
-![](https://i.imgur.com/Pl7tdOP.png)
+#### 1. Tables ARP
 
-### 3. Configuration des noms de domaine
+```
+[root@server1 ~]# ip n
+10.3.2.254 dev enp0s8 lladdr 08:00:27:89:0b:77 REACHABLE
+10.3.2.1 dev enp0s8 lladdr 0a:00:27:00:00:1b DELAY
+```
 
-Après avoir modifier les fichiers hosts, on ajoute des noms de domaines et on peut désormais ping en remplaçant l'ip de la vm par : vm2.tp2.b1
+> L’hôte avec l’ip 10.3.2.254 est sur le domaine de diffusion dev enp0s8 la MAC a été obtenue via le protocole ARP et la trame en sera composée a chaque fois qu’un paquet est émis a destination de 10.3.2.254. REACHABLE indique que la connexion a été établie et que l'hôte est apparement joignable.
 
-🌞 utilisation des noms de domaines
+```
+[root@router ~]# ip n
+10.3.1.11 dev enp0s8 lladdr 08:00:27:38:66:f6 REACHABLE
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0a DELAY
+10.3.2.11 dev enp0s9 lladdr 08:00:27:80:25:00 REACHABLE
+```
 
--> ![](https://i.imgur.com/drpkihL.png)
+> L'hôte avec l'ip 10.3.2.11 est sur le domaine de diffusion dev enp0s9 la MAC a été obtenue via le protocole ARP et la trame en sera composée a chaque fois qu'un paquet est émis a destination de 10.3.2.11. STALE indique que la connexion a été établie mais le voisin n'est plus joignable.
 
-Traceroute
 
--> ![](https://i.imgur.com/36fkfmy.png)
+```
+[root@client1 ~]# ip n
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0a REACHABLE
+10.3.1.254 dev enp0s8 lladdr 08:00:27:9a:f6:01 REACHABLE
+```
 
-- Netcat : 
+> L'hôte avec l'ip 10.3.1.1 est sur le domaine de diffusion dev enp0s8 la MAC a été obtenue via le protocole ARP et la trame en sera composée a chaque fois qu'un paquet est émis a destination de 10.3.1.1. DELAY indique qu'un paquet a été transmis et est en attente d'une réponse.
 
-Vm1 : serveur
 
-Vm2 : client
+#### 2. Requêtes ARP
 
-![](https://i.imgur.com/HkAB7sY.png)
+##### A. Table ARP 1
 
-Et ça marche. 
+🌞 mettez en évidence le changement dans la table ARP de client1
 
-FIN DU TP2
+- Avant
+
+```
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0a REACHABLE
+```
+
+- Apres 
+
+```
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:0a REACHABLE
+10.3.1.254 dev enp0s8 lladdr 08:00:27:9a:f6:01 REACHABLE
+```
+##### B. Table ARP 2
+
+- Avant
+
+```
+10.3.2.1 dev enp0s8 lladdr 0a:00:27:00:00:1b REACHABLE
+```
+
+- Apres 
+
+```
+10.3.2.254 dev enp0s8 lladdr 08:00:27:89:0b:77 REACHABLE
+10.3.2.1 dev enp0s8 lladdr 0a:00:27:00:00:1b REACHABLE
+```
+
+##### C. tcpdump 1
+
+🌞 mettez en évidence toutes les trames ARP capturées lors de cet échange, et expliquer chacune d'entre elles
+
+![](https://i.imgur.com/Lrw7dpp.png)
+
+##### C. tcpdump 2
+
+🌞 mettez en évidence toutes les trames ARP capturées lors de cet échange, et expliquer chacune d'entre elles
+
+![](https://i.imgur.com/nITLzG6.png)
+
+##### E. u okay bro ?
+
+🌞 Expliquer, en une suite d'étapes claires, toutes les trames ARP échangées lorsque client1 envoie un ping vers server1, en traversant la machine router.
+
+### Entracte : Donner un accès internet aux VMs
+
+#### 🌞 Permettre un accès WAN (Internet) à client1
+
+ - vérifiez que vous avez un accès au WAN (internet) avec les commandes :
+
+ - - envoi d'un message simple vers un serveur en ligne
+
+$ ping 8.8.8.8
+
+```
+[root@client1 ~]# ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=54 time=39.1 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=54 time=24.3 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=54 time=31.8 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=54 time=21.0 ms
+^C
+--- 8.8.8.8 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3007ms
+rtt min/avg/max/mdev = 21.089/29.122/39.189/6.999 ms
+```
+
+ - - test de la résolution de nom DNS
+
+$ dig google.com
+
+```
+root@client1 ~]# dig google.com
+
+; <<>> DiG 9.11.4-P2-RedHat-9.11.4-9.P2.el7 <<>> google.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 58055
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1452
+;; QUESTION SECTION:
+;google.com.                    IN      A
+
+;; ANSWER SECTION:
+google.com.             218     IN      A       172.217.19.238
+
+;; Query time: 34 msec
+;; SERVER: 1.1.1.1#53(1.1.1.1)
+;; WHEN: Mon Mar 16 17:59:07 CET 2020
+;; MSG SIZE  rcvd: 55
+```
+
+### III. Plus de tcpdump
+
+#### 1. TCP et UDP
+
+##### A. Warm-up
+
+- en UDP : 
+
+```
+[root@server1 ~]# nc -l 10.3.2.11 9999
+hello world
+[root@server1 ~]# 
+```
+
+```
+[root@client1 ~]# nc 10.3.2.11 9999
+hello world
+^C
+[root@client1 ~]# 
+```
+
+##### B. Analyse de trames
+
+🌞 TCP : 
+
+```
+[root@client1 ~]# nc 10.3.2.11 9999
+ça va la zone
+parfait et toi
+je suis en gucci
+^C
+[root@client1 ~]#
+```
+
+```
+[root@server1 ~]# nc -l 10.3.2.11 9999
+ça va la zone
+parfait et toi
+je suis en gucci
+[root@server1 ~]#
+```
+
+ - Mise en évidence 3-way handshake tcp
+
+![](https://i.imgur.com/2vQh3fW.png)
+
+ - observez la suite des échanges (PSH, ACK, etc)
+
+![](https://i.imgur.com/ITjMiAU.png)
+
+ - observez la fin de connexion
+
+![](https://i.imgur.com/KVgPlan.png)
+
+
+
+---
+
+🌞 UDP : 
+
+```
+[root@server1 ~]# nc -l 10.3.2.11 -u 9999
+cc
+cc toi
+^C
+[root@server1 ~]#
+```
+
+```
+[root@client1 ~]# nc 10.3.2.11 -u 9999
+cc
+cc toi
+^C
+[root@client1 ~]#
+```
+
+![](https://i.imgur.com/C75diJa.png)
+
+La différence que l'on remarque, c'est qu'il n'y a pas le "3-way handshake TCP"
+
+Du coup, l'udp est plus rapide.
+
+#### 2. SSH
+
+Après s'être connecté en ssh sur notre serveur depuis le client. On observe la connection ssh dans wireshark. On remarque tout de suite que le protocole SSH utilise le TCP puisque qu'il n'y a aucune trame UDP.
+
+### IV. Bonus
+
+#### ARP cache poisonning. 
+
+On part sur Arping
+
+Sur notre client pirate on effectue cette commande : 
+
+```
+arping -c 1 -I enp0s8 10.3.1.11 (ip victime)
+```
+
+On va ensuite ping notre server 1 avec le client 1, et observer ce qui ce passe dans wireshark
+
+
+![](https://i.imgur.com/w4mNnDD.png)
+
+
+On voit un "duplicate use of 10.3.1.12 detected" ce qui veut dire que notre arp cache poisoning a marcher mais que wireshark l'a detecté avec un niveau de sécutité "WARINING"
+
+#### NGINX
+
+Apres avoir installé nginx on fait : 
+
+```
+systemctl start nginx && enable nginx
+```
+
+```
+firewall-cmd --add-port=80/tcp --permanent
+firewall-cmd --reload
+```
+
+On peut mettre notre ip serveur dans firefox et admirer le résultat : 
+
+![](https://i.imgur.com/zKxp2p0.png)
+
+
+# FIN DU TP3
